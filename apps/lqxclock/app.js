@@ -1,5 +1,6 @@
 var mode = "clock";
 var heartRate = "";
+var temperature = "";
 
 var img = require("heatshrink").decompress(atob("rVawJC/AH4AK/+AAYN/4AJDgP//gOC/wKF/4SBAYPgBQv4EAIWFBQItBBQIaCGQQGB+E/DQYABAwX+j4aCBQQGD54DCHAUPAwQADKYUDBQwhCJoQAFEIRCCAAhDCIQQhHG45lCG5HwG5KHCG465CN4ZOGg4KHJwIs4Q0EABQ7VCJw43CJxBkBcBZOHG4ROHG4QhHG4SdIG4IhIN4JwIG4QhHU4JwIG4YhHBQQhHIQRDHIQQhHIQYhGIQYhGQoSHHJoapHBQghFIQYhGZAQhHJojtFJogABJpCeFJop8FBQp8ETYZaGLAhaFLAo4EBQ44CMYo4EMYw4DMYw4DMYw4EBRA4BBRA4BNwyqDBRIA/AH4ACA="));
 
@@ -43,11 +44,29 @@ function drawHeartRate() {
   g.drawString(heartRate, (g.getWidth()) / 2, (g.getHeight()) / 2 + verticalOffset);  
 }
 
+
+function drawTemp() {
+  var circleSize = 60;
+  g.reset();
+  clearUnderWidgets();
+  g.setColor("#ffffff");
+  g.fillCircle(g.getWidth() / 2, g.getHeight() / 2, circleSize);
+  
+  var fontSize = 36;
+  g.setColor("#000000");
+  g.setFont("Vector", fontSize);
+  g.setFontAlign(0, 0); // center font
+  g.drawString(temperature, (g.getWidth()) / 2, (g.getHeight()) / 2);
+}
+
+
 function redraw() {
   if (mode == "clock") {
     drawTime();
   } else if (mode == "heart") {
     drawHeartRate();
+  } else if (mode == "temp") {
+    drawTemp();
   }
 }
 
@@ -65,8 +84,9 @@ Bangle.on("lcdPower", on => {
   }
 });
 
-Bangle.setHRMPower(1);
+// Heart Rate
 
+Bangle.setHRMPower(1);
 // Only on v2.10 (see hrm)
 Bangle.on('HRM', function(heartrate) {
   heartRate = heartrate.bpm;
@@ -79,10 +99,22 @@ Bangle.on('touch', function(zone, e) {
       mode = "heart";
       break;
     case "heart":
+      mode = "temp";
+      break;
+    case "temp":
     default:
       mode = "clock";
       break;
   }
+  Bangle.buzz(100);
+  redraw();
+});
+
+// Barometer
+
+Bangle.setBarometerPower(true);
+Bangle.on("pressure", (r) => {
+  temperature = r.temperature.toFixed(1).toString() + "C";
 });
 
 
