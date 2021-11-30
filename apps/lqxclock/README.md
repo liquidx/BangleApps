@@ -23,3 +23,7 @@ Name who should be contacted for support/update requests
 ## Creator
 
 Your name
+
+```
+require("Storage").write("lqxclock.info", { "id": "lqxclock", "name": "lqx clock", "type": "clock", "src":"lqxclock.app.js" });
+```
