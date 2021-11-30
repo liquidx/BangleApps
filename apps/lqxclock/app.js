@@ -1,6 +1,7 @@
 var mode = "clock";
 var heartRate = "";
 var temperature = "";
+var sleepInterval;
 
 var img = require("heatshrink").decompress(atob("rVawJC/AH4AK/+AAYN/4AJDgP//gOC/wKF/4SBAYPgBQv4EAIWFBQItBBQIaCGQQGB+E/DQYABAwX+j4aCBQQGD54DCHAUPAwQADKYUDBQwhCJoQAFEIRCCAAhDCIQQhHG45lCG5HwG5KHCG465CN4ZOGg4KHJwIs4Q0EABQ7VCJw43CJxBkBcBZOHG4ROHG4QhHG4SdIG4IhIN4JwIG4QhHU4JwIG4YhHBQQhHIQRDHIQQhHIQYhGIQYhGQoSHHJoapHBQghFIQYhGZAQhHJojtFJogABJpCeFJop8FBQp8ETYZaGLAhaFLAo4EBQ44CMYo4EMYw4DMYw4DMYw4EBRA4BBRA4BNwyqDBRIA/AH4ACA="));
 
@@ -70,8 +71,31 @@ function redraw() {
   }
 }
 
+function sleep() {
+  Bangle.setHRMPower(0);
+  Bangle.setBarometerPower(0);
+  sleepTimerClear();
+}
+
+function sleepTimerStart() {
+  sleepTimerClear()
+  sleepInterval = setInterval(sleep, 60000);
+}
+
+function sleepTimerClear() {
+  if (sleepInterval) clearInterval(sleepInterval);
+  sleepInterval = undefined;
+}
+
+function wake() {
+  Bangle.setHRMPower(1);
+  Bangle.setBarometerPower(1);
+}
+
+
 
 g.clear();
+wake();
 drawTime();
 
 var secondInterval;
@@ -81,12 +105,13 @@ Bangle.on("lcdPower", on => {
   if (on) {
     secondInterval = setInterval(draw, 1000);
     redraw();
+    wake();
+    sleepTimerStart();
   }
 });
 
 // Heart Rate
 
-Bangle.setHRMPower(1);
 // Only on v2.10 (see hrm)
 Bangle.on('HRM', function(heartrate) {
   heartRate = heartrate.bpm;
@@ -106,13 +131,12 @@ Bangle.on('touch', function(zone, e) {
       mode = "clock";
       break;
   }
+  Bangle.setLCDBrightness(0.5);
   Bangle.buzz(100);
   redraw();
 });
 
 // Barometer
-
-Bangle.setBarometerPower(true);
 Bangle.on("pressure", (r) => {
   temperature = r.temperature.toFixed(1).toString() + "C";
 });
